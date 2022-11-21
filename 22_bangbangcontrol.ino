@@ -19,10 +19,10 @@
 #define _DUTY_MAX 2500  // Servo angle: D degree
 #define _DUTY_NEU 1500  // Servo angle: 0 degree
 #define _DUTY_MIN 500   // Servo angle: E degree
-#define _SERVO_ANGLE_DIFF 257.5 // Replace with |D - E| degree
-#define _SERVO_SPEED 700 // servo speed limit (unit: degree/second)
+#define _SERVO_ANGLE_DIFF 200 // Replace with |D - E| degree
+#define _SERVO_SPEED 1000 // servo speed limit (unit: degree/second)
 
-#define _BANGBANG_RANGE 150
+#define _BANGBANG_RANGE 30
 
 // global variables
 float dist_filtered, dist_ema, dist_target; // unit: mm
@@ -77,19 +77,19 @@ void loop() {
     event_dist = false;
 
     // get a distance reading from the distance sensor
-    dist_filtered = volt_to_distance(ir_sensor_filtered(10, 0.5)); // Replace n with your desired value
+    dist_filtered = volt_to_distance(ir_sensor_filtered(5, 0.5)); // Replace n with your desired value
     dist_ema = _EMA_ALPHA * dist_ema + (1.0 - _EMA_ALPHA) * dist_filtered;
 
     // bang bang control
-    if(dist_ema <= dist_target) { // Replace 1 with a proper test expression using dist_target and dist_ema.
-      duty_target = _DUTY_MAX; // Complete this line using _BANGBANG_RANGE.
+    if(dist_ema<dist_target) { // Replace 1 with a proper test expression using dist_target and dist_ema.
+      duty_target += _BANGBANG_RANGE; // Complete this line using _BANGBANG_RANGE.
       digitalWrite(PIN_LED, 0);
     }
-    else  {
-      duty_target = _DUTY_MIN; // Complete this line using _BANGBANG_RANGE.
-      digitalWrite(PIN_LED, 0);
+    else {
+      duty_target -= _BANGBANG_RANGE; // Complete this line using _BANGBANG_RANGE.
+      digitalWrite(PIN_LED, 1);
     }
-  }
+  }duty_target=min(max(duty_target,_DUTY_MIN),_DUTY_MAX);
   
   if(event_servo) {
     event_servo = false;
@@ -119,9 +119,9 @@ void loop() {
   }
 }
 
-float volt_to_distance(int a_value)
+float volt_to_distance(int x)
 {
-  return 481 + (-1.4 * a_value) + 1.03 * 0.001 * a_value * a_value; // Replace this with the equation obtained from nonlinear regression analysis
+  return 429-1.41*x+1.79E-03*x*x-1.03E-06*x*x*x; // Replace this with the equation obtained from nonlinear regression analysis
 }
 unsigned int ir_sensor_filtered(unsigned int n, float position)
 {
